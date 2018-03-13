@@ -1216,7 +1216,6 @@ namespace SevenZip
         /// <summary>
         /// Extracts files from the archive, giving a callback the choice what
         /// to do with each file. The order of the files is given by the archive.
-        /// 7-Zip (and any other solid) archives are NOT supported.
         /// </summary>
         /// <param name="extractFileCallback">The callback to call for each file in the archive.</param>
         public void ExtractFiles(ExtractFileCallback extractFileCallback)
@@ -1225,7 +1224,7 @@ namespace SevenZip
             InitArchiveFileData(false);
             if (IsSolid)
             {
-                // solid strategy
+                ExtractCommon(() => new CustomArchiveExtractCallback(_archiveFileData, extractFileCallback), null, true, false);
             }
             else
             {

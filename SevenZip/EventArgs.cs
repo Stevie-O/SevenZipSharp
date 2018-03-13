@@ -386,6 +386,11 @@ namespace SevenZip
         }
 
         /// <summary>
+        /// If true, automatically closes the stream when the write finishes.
+        /// </summary>
+        public bool CloseStream { get; set; }
+
+        /// <summary>
         /// Gets or sets any data that will be preserved between the <see cref="ExtractFileCallbackReason.Start"/> callback call
         /// and the <see cref="ExtractFileCallbackReason.Done"/> or <see cref="ExtractFileCallbackReason.Failure"/> calls.
         /// </summary>

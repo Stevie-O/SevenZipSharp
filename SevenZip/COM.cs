@@ -851,9 +851,9 @@ namespace SevenZip
         /// Gets the stream for file extraction
         /// </summary>
         /// <param name="index">File index in the archive file table</param>
-        /// <param name="outStream">Pointer to the stream</param>
+        /// <param name="outStream">Pointer to the stream (or null to skip the file)</param>
         /// <param name="askExtractMode">Extraction mode</param>
-        /// <returns>S_OK - OK, S_FALSE - skip this file</returns>
+        /// <returns>S_OK - OK; S_FALSE - an error occurred</returns>
         [PreserveSig]
         int GetStream(
             uint index,

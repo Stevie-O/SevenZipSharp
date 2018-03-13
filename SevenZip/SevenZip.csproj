@@ -86,6 +86,7 @@
     <Compile Include="ArchiveOpenCallback.cs" />
     <Compile Include="ArchiveUpdateCallback.cs" />
     <Compile Include="Com.cs" />
+    <Compile Include="CustomArchiveExtractCallback.cs" />
     <Compile Include="EventArgs.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="FileSignatureChecker.cs" />
