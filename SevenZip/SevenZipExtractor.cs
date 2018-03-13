@@ -616,19 +616,12 @@ namespace SevenZip
         /// <summary>
         /// Produces an array of indexes from 0 to the maximum value in the specified array
         /// </summary>
-        /// <param name="indexes">The source array</param>
+        /// <param name="indexes">The *sorted* source array</param>
         /// <returns>The array of indexes from 0 to the maximum value in the specified array</returns>
-        private static uint[] SolidIndexes(uint[] indexes)
+        private static uint[] SolidIndexes(uint[] sorted_indexes)
         {
-#if CS4
-            int max = indexes.Aggregate(0, (current, i) => Math.Max(current, (int) i));
-#else
-            int max = 0;
-            foreach (uint i in indexes)
-            {
-                max = Math.Max(max, (int)i);
-            }
-#endif
+            if (sorted_indexes.Length == 0) return sorted_indexes;
+            int max = (int)sorted_indexes[sorted_indexes.Length - 1];
             if (max > 0)
             {
                 max++;
@@ -639,7 +632,7 @@ namespace SevenZip
                 }
                 return res;
             }
-            return indexes;
+            return sorted_indexes;
         }
 
         /// <summary>
