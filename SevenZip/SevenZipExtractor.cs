@@ -718,14 +718,6 @@ namespace SevenZip
             return aec;
         }
 
-        private void FreeArchiveExtractCallback(ArchiveExtractCallback callback)
-        {
-            callback.Open -= ((s, e) => { _unpackedSize = (long)e.TotalSize; });
-            callback.FileExtractionStarted -= FileExtractionStartedEventProxy;
-            callback.FileExtractionFinished -= FileExtractionFinishedEventProxy;
-            callback.Extracting -= ExtractingEventProxy;
-            callback.FileExists -= FileExistsEventProxy;
-        }
         #endregion        
 #endif
 
@@ -983,16 +975,9 @@ namespace SevenZip
                 }
                 using (var aec = GetArchiveExtractCallback("", (int)_filesCount, null))
                 {
-                    try
-                    {
-                        CheckedExecute(
-                            _archive.Extract(null, UInt32.MaxValue, 1, aec),
-                            SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
-                    }
-                    finally
-                    {
-                        FreeArchiveExtractCallback(aec);
-                    }
+                    CheckedExecute(
+                        _archive.Extract(null, UInt32.MaxValue, 1, aec),
+                        SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
                 }
             }
             catch (Exception)
@@ -1080,16 +1065,9 @@ namespace SevenZip
             {
                 using (var aec = GetArchiveExtractCallback(stream, (uint) index, indexes.Length))
                 {
-                    try
-                    {
-                        CheckedExecute(
-                            _archive.Extract(indexes, (uint) indexes.Length, 0, aec),
-                            SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
-                    }
-                    finally
-                    {
-                        FreeArchiveExtractCallback(aec);
-                    }
+                    CheckedExecute(
+                        _archive.Extract(indexes, (uint) indexes.Length, 0, aec),
+                        SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
                 }
             }
             catch (Exception)
@@ -1149,16 +1127,9 @@ namespace SevenZip
                     {
                         using (var aec = GetArchiveExtractCallback(directory, (int) _filesCount, origIndexes))
                         {
-                            try
-                            {
-                                CheckedExecute(
-                                    _archive.Extract(uindexes, (uint) uindexes.Length, 0, aec),
-                                    SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
-                            }
-                            finally
-                            {
-                                FreeArchiveExtractCallback(aec);
-                            }
+                            CheckedExecute(
+                                _archive.Extract(uindexes, (uint) uindexes.Length, 0, aec),
+                                SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
                         }
                     }
                     catch (Exception)
@@ -1312,17 +1283,10 @@ namespace SevenZip
                     {
                         using (var aec = GetArchiveExtractCallback(directory, (int) _filesCount, null))
                         {
-                            try
-                            {
-                                CheckedExecute(
-                                    _archive.Extract(null, UInt32.MaxValue, 0, aec),
-                                    SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
-                                OnEvent(ExtractionFinished, EventArgs.Empty, false);
-                            }
-                            finally
-                            {
-                                FreeArchiveExtractCallback(aec);
-                            }
+                            CheckedExecute(
+                                _archive.Extract(null, UInt32.MaxValue, 0, aec),
+                                SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
+                            OnEvent(ExtractionFinished, EventArgs.Empty, false);
                         }
                     }
                     catch (Exception)

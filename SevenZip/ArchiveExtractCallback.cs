@@ -519,6 +519,13 @@ namespace SevenZip
 
         public void Dispose()
         {
+            // clear all event handlers
+            Open = null;
+            FileExtractionStarted = null;
+            FileExtractionFinished = null;
+            Extracting = null;
+            FileExists = null;
+
 #if !WINCE
             GC.RemoveMemoryPressure(MEMORY_PRESSURE);
 #endif
