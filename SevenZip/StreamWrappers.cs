@@ -496,7 +496,7 @@ namespace SevenZip
     }
 #endif
 
-    internal sealed class FakeOutStreamWrapper : ISequentialOutStream, IDisposable
+    internal sealed class NullOutStream : ISequentialOutStream, IDisposable
     {
         #region IDisposable Members
 

@@ -50,7 +50,7 @@ namespace SevenZip
         private float _doneRate;
 
         private SevenZipExtractor _extractor;
-        private FakeOutStreamWrapper _fakeStream;
+        private NullOutStream _fakeStream;
         private uint? _fileIndex;
         private int _filesCount;
         private OutStreamWrapper _fileStream;
@@ -148,7 +148,7 @@ namespace SevenZip
         {
             _archive = archive;
             _filesCount = filesCount;
-            _fakeStream = new FakeOutStreamWrapper();
+            _fakeStream = new NullOutStream();
             _fakeStream.BytesWritten += IntEventArgsHandler;
             _extractor = extractor;
 #if !WINCE
