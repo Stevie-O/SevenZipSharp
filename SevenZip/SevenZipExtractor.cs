@@ -616,7 +616,7 @@ namespace SevenZip
         /// <summary>
         /// Produces an array of indexes from 0 to the maximum value in the specified array
         /// </summary>
-        /// <param name="indexes">The *sorted* source array</param>
+        /// <param name="sorted_indexes">The *sorted* source array</param>
         /// <returns>The array of indexes from 0 to the maximum value in the specified array</returns>
         private static uint[] SolidIndexes(uint[] sorted_indexes)
         {
@@ -686,7 +686,7 @@ namespace SevenZip
         /// <param name="actualIndexes">The list of actual indexes (solid archives support)</param>
         /// <returns>The ArchiveExtractCallback callback</returns>
         private ArchiveExtractCallback GetArchiveExtractCallback(string directory, int filesCount,
-                                                                 List<uint> actualIndexes)
+                                                                 uint[] actualIndexes)
         {
             var aec = String.IsNullOrEmpty(Password)
                       ? new ArchiveExtractCallback(_archive, directory, filesCount, PreserveDirectoryStructure, actualIndexes, this)
@@ -1096,9 +1096,8 @@ namespace SevenZip
             {
                 uindexes[i] = (uint)indexes[i];
             }
-            var origIndexes = new List<uint>(uindexes);
-            origIndexes.Sort();
-            uindexes = origIndexes.ToArray();
+            Array.Sort(uindexes);
+            var origIndexes = uindexes;
             if (_isSolid.Value)
             {
                 uindexes = SolidIndexes(uindexes);
@@ -1109,7 +1108,7 @@ namespace SevenZip
             try
             {
                 IInStream archiveStream;
-                using ((archiveStream = GetArchiveStream(origIndexes.Count != 1)) as IDisposable)
+                using ((archiveStream = GetArchiveStream(origIndexes.Length != 1)) as IDisposable)
                 {
                     var openCallback = GetArchiveOpenCallback();
                     if (!OpenArchive(archiveStream, openCallback))
@@ -1137,7 +1136,7 @@ namespace SevenZip
             }
             finally
             {
-                if (origIndexes.Count > 1)
+                if (origIndexes.Length > 1)
                 {
                     if (_archive != null)
                     {

@@ -32,7 +32,7 @@ namespace SevenZip
     internal sealed class ArchiveExtractCallback : CallbackBase, IArchiveExtractCallback, ICryptoGetTextPassword,
                                                    IDisposable
     {
-        private List<uint> _actualIndexes;
+        private uint[] _actualIndexes;
         private IInArchive _archive;
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace SevenZip
         /// <param name="actualIndexes">The list of actual indexes (solid archives support)</param>
         /// <param name="directoryStructure">The value indicating whether to preserve directory structure of extracted files.</param>
         public ArchiveExtractCallback(IInArchive archive, string directory, int filesCount, bool directoryStructure,
-            List<uint> actualIndexes, SevenZipExtractor extractor)
+            uint[] actualIndexes, SevenZipExtractor extractor)
         {
             Init(archive, directory, filesCount, directoryStructure, actualIndexes, extractor);
         }
@@ -87,7 +87,7 @@ namespace SevenZip
         /// <param name="actualIndexes">The list of actual indexes (solid archives support)</param>
         /// <param name="directoryStructure">The value indicating whether to preserve directory structure of extracted files.</param>
         public ArchiveExtractCallback(IInArchive archive, string directory, int filesCount, bool directoryStructure,
-            List<uint> actualIndexes, string password, SevenZipExtractor extractor)
+            uint[] actualIndexes, string password, SevenZipExtractor extractor)
             : base(password)
         {
             Init(archive, directory, filesCount, directoryStructure, actualIndexes, extractor);
@@ -124,7 +124,7 @@ namespace SevenZip
         }
 
         private void Init(IInArchive archive, string directory, int filesCount, bool directoryStructure,
-            List<uint> actualIndexes, SevenZipExtractor extractor)
+            uint[] actualIndexes, SevenZipExtractor extractor)
         {
             CommonInit(archive, filesCount, extractor);
             _directory = directory;
@@ -289,7 +289,7 @@ namespace SevenZip
                 {
                     #region Extraction to a file
 
-                    if (_actualIndexes == null || _actualIndexes.Contains(index))
+                    if (_actualIndexes == null || Array.BinarySearch(_actualIndexes, index) >= 0)
                     {
                         var data = new PropVariant();
                         _archive.GetProperty(index, ItemPropId.Path, ref data);
