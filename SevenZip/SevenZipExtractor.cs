@@ -643,26 +643,37 @@ namespace SevenZip
         }
 
         /// <summary>
-        /// Checkes whether all the indexes are valid.
+        /// Checks whether all the indexes are valid.
         /// </summary>
         /// <param name="indexes">The indexes to check.</param>
-        /// <returns>True is valid; otherwise, false.</returns>
-        private static bool CheckIndexes(params int[] indexes)
+        /// <param name="limit">The <strong>exclusive</strong> upper bound for each index</param>
+        /// <returns>True if all indexes meet <code>0 &lt;= i &lt; limit</code>; otherwise, false.</returns>
+        private static bool CheckIndexes(int[] indexes, uint limit)
         {
 #if CS4 // Wow, C# 4 is great!
-            return indexes.All(i => i >= 0);
+            return indexes.All(i => i >= 0 && (uint)i < limit);
 #else
-            bool res = true;
             foreach (int i in indexes)
             {
-                if (i < 0)
-                {
-                    res = false;
-                    break;
-                }
+                if (i < 0 || (uint)i >= limit)
+                    return false;
             }
-            return res;
+            return true;
 #endif
+        }
+
+        /// <summary>
+        /// Checks whether all the indexes are valid, and attempts to throw an exception if they are not.
+        /// </summary>
+        /// <param name="indexes">The indexes to check.</param>
+        /// <param name="argumentName">Argument name (for the exception)</param>
+        /// <returns>True if all indexes are valid; otherwise, false.</returns>
+        private bool CheckIndexes(int[] indexes, string argumentName)
+        {
+            if (!CheckIndexes(indexes, _filesCount ?? uint.MaxValue)
+                && !ThrowException(null, new ArgumentException("File indexes must be nonnegative and less than the number of files in the archive.", argumentName)))
+                return false;
+            return true;
         }
 
         private void ArchiveExtractCallbackCommonInit(ArchiveExtractCallback aec)
@@ -1044,13 +1055,8 @@ namespace SevenZip
         {
             DisposedCheck();
             ClearExceptions();
-            if (!CheckIndexes(index))
-            {
-                if (!ThrowException(null, new ArgumentException("The index must be more or equal to zero.", "index")))
-                {
-                    return;
-                }
-            }
+            if (!CheckIndexes(new[] { index }, nameof(index)))
+                return;
             if (!stream.CanWrite)
             {
                 if (!ThrowException(null, new ArgumentException("The specified stream can not be written.", "stream")))
@@ -1059,14 +1065,6 @@ namespace SevenZip
                 }
             }
             InitArchiveFileData(false);
-            if (index > _filesCount - 1)
-            {
-                if (!ThrowException(null, new ArgumentOutOfRangeException(
-                                              "index", "The specified index is greater than the archive files count.")))
-                {
-                    return;
-                }
-            }
             var indexes = new[] {(uint) index};
             if (_isSolid.Value)
             {
@@ -1116,14 +1114,8 @@ namespace SevenZip
         {
             DisposedCheck();
             ClearExceptions();
-            if (!CheckIndexes(indexes))
-            {
-                if (
-                    !ThrowException(null, new ArgumentException("The indexes must be more or equal to zero.", "indexes")))
-                {
-                    return;
-                }
-            }
+            if (!CheckIndexes(indexes, nameof(indexes)))
+                return;
             InitArchiveFileData(false);
 
             #region Indexes stuff
@@ -1133,32 +1125,6 @@ namespace SevenZip
             {
                 uindexes[i] = (uint) indexes[i];
             }
-#if CS4
-            if (uindexes.Where(i => i >= _filesCount).Any(
-                i => !ThrowException(null, 
-                                     new ArgumentOutOfRangeException("indexes", 
-                                                                    "Index must be less than " + 
-                                                                        _filesCount.Value.ToString(
-                                                                            CultureInfo.InvariantCulture) + "!"))))
-            {
-                return;
-            }
-#else
-            foreach (uint i in uindexes)
-            {
-                if (i >= _filesCount)
-                {
-                    if (!ThrowException(null,
-                                        new ArgumentOutOfRangeException("indexes",
-                                                                        "Index must be less than " +
-                                                                            _filesCount.Value.ToString(
-                                                                                CultureInfo.InvariantCulture) + "!")))
-                    {
-                        return;
-                    }
-                }
-            }
-#endif
             var origIndexes = new List<uint>(uindexes);
             origIndexes.Sort();
             uindexes = origIndexes.ToArray();
