@@ -1075,40 +1075,38 @@ namespace SevenZip
         }
         #endregion
 
-        #region ExtractFiles overloads
         /// <summary>
-        /// Unpacks files by their indices to the specified directory.
+        /// Common code for extracting files from an archive.
         /// </summary>
-        /// <param name="indexes">indexes of the files in the archive file table.</param>
-        /// <param name="directory">Directory where the files are to be unpacked.</param>
-        public void ExtractFiles(string directory, params int[] indexes)
+        /// <param name="aecFactory">Delegate for creating the callback object.</param>
+        /// <param name="uindexes">Sorted array containing indexes of files to be extracted, or null to extract all files</param>
+        /// <param name="disposeArchive">If true, the archive object will be disposed at the end</param>
+        /// <param name="raiseFinishedEvent">If true, the <see cref="ExtractionFinished"/> event
+        /// will be raised at the end.</param>
+        void ExtractCommon<T>(Func<T> aecFactory, uint[] uindexes, bool disposeArchive, bool raiseFinishedEvent)
+            where T : CallbackBase, IArchiveExtractCallback, IDisposable
         {
             DisposedCheck();
             ClearExceptions();
-            if (!CheckIndexes(indexes, nameof(indexes)))
-                return;
             InitArchiveFileData(false);
 
+            uint uindex_count;
             #region Indexes stuff
-
-            var uindexes = new uint[indexes.Length];
-            for (int i = 0; i < indexes.Length; i++)
+            if (uindexes != null)
             {
-                uindexes[i] = (uint)indexes[i];
+                if (_isSolid.Value) uindexes = SolidIndexes(uindexes);
+                uindex_count = (uint)uindexes.Length;
             }
-            Array.Sort(uindexes);
-            var origIndexes = uindexes;
-            if (_isSolid.Value)
+            else
             {
-                uindexes = SolidIndexes(uindexes);
+                uindex_count = uint.MaxValue;
             }
-
             #endregion
 
             try
             {
                 IInStream archiveStream;
-                using ((archiveStream = GetArchiveStream(origIndexes.Length != 1)) as IDisposable)
+                using ((archiveStream = GetArchiveStream(disposeArchive)) as IDisposable)
                 {
                     var openCallback = GetArchiveOpenCallback();
                     if (!OpenArchive(archiveStream, openCallback))
@@ -1117,10 +1115,10 @@ namespace SevenZip
                     }
                     try
                     {
-                        using (var aec = GetArchiveExtractCallback(directory, (int)_filesCount, origIndexes))
+                        using (var aec = aecFactory())
                         {
                             CheckedExecute(
-                                _archive.Extract(uindexes, (uint)uindexes.Length, 0, aec),
+                                _archive.Extract(uindexes, uindex_count, 0, aec),
                                 SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
                         }
                     }
@@ -1132,11 +1130,12 @@ namespace SevenZip
                         }
                     }
                 }
-                OnEvent(ExtractionFinished, EventArgs.Empty, false);
+                if (raiseFinishedEvent)
+                    OnEvent(ExtractionFinished, EventArgs.Empty, false);
             }
             finally
             {
-                if (origIndexes.Length > 1)
+                if (disposeArchive)
                 {
                     if (_archive != null)
                     {
@@ -1147,6 +1146,32 @@ namespace SevenZip
                 }
             }
             ThrowUserException();
+        }
+
+        #region ExtractFiles overloads
+        /// <summary>
+        /// Unpacks files by their indices to the specified directory.
+        /// </summary>
+        /// <param name="indexes">indexes of the files in the archive file table.</param>
+        /// <param name="directory">Directory where the files are to be unpacked.</param>
+        public void ExtractFiles(string directory, params int[] indexes)
+        {
+            if (indexes == null)
+            {
+                ExtractArchive(directory);
+                return;
+            }
+            if (indexes.Length == 0)
+                return;
+
+            if (!CheckIndexes(indexes, nameof(indexes)))
+                return;
+
+            var uindexes = Array.ConvertAll(indexes, (_) => (uint)_);
+            Array.Sort(uindexes);
+
+            ExtractCommon(() => GetArchiveExtractCallback(directory, (int)_filesCount, uindexes),
+                uindexes, uindexes.Length > 1, true);
         }
 
         /// <summary>
@@ -1258,48 +1283,7 @@ namespace SevenZip
         /// <param name="directory">The directory where the files are to be unpacked.</param>
         public void ExtractArchive(string directory)
         {
-            DisposedCheck();
-            ClearExceptions();
-            InitArchiveFileData(false);
-            try
-            {
-                IInStream archiveStream;
-                using ((archiveStream = GetArchiveStream(true)) as IDisposable)
-                {
-                    var openCallback = GetArchiveOpenCallback();
-                    if (!OpenArchive(archiveStream, openCallback))
-                    {
-                        return;
-                    }
-                    try
-                    {
-                        using (var aec = GetArchiveExtractCallback(directory, (int)_filesCount, null))
-                        {
-                            CheckedExecute(
-                                _archive.Extract(null, UInt32.MaxValue, 0, aec),
-                                SevenZipExtractionFailedException.DEFAULT_MESSAGE, aec);
-                            OnEvent(ExtractionFinished, EventArgs.Empty, false);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        if (openCallback.ThrowException())
-                        {
-                            throw;
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                if (_archive != null)
-                {
-                    _archive.Close();
-                }
-                _archiveStream = null;
-                _opened = false;
-            }
-            ThrowUserException();
+            ExtractCommon(() => GetArchiveExtractCallback(directory, (int)_filesCount, null), null, true, false);
         }
         #endregion
 
